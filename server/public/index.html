@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ultra Bagual Video</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: "#44D5BC",
+                            dark: "#4f46e5",
+                        },
+                        secondary: {
+                            DEFAULT: "#408183",
+                            dark: "#059669",
+                        },
+                        dark: {
+                            DEFAULT: "#1e293b",
+                            darker: "#0f172a",
+                        },
+                        light: "#f8fafc",
+                    },
+                    boxShadow: {
+                        neumorphic: "8px 8px 16px #d1d5db, -8px -8px 16px #ffffff",
+                        "neumorphic-dark": "8px 8px 16px #408183, -8px -8px 16px #334155",
+                        "inner-dark": "inset 2px 2px 5px #408183, inset -2px -2px 5px #334155",
+                    },
+                    screens: {
+                        'xs': '320px',
+                        'sm': '640px',
+                        'md': '768px',
+                        'lg': '1024px',
+                        'xl': '1280px',
+                        '2xl': '1536px',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+        body {
+            font-family: "Inter", sans-serif;
+            overflow-x: hidden;
+            background: #f0f2f5;
+            dark: #1a202c;
+        }
+
+        .video-overlay {
+            transition: all 0.3s ease;
+        }
+
+        .video-player:hover .video-overlay {
+            opacity: 1;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .remote-video-item {
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .remote-video-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .control-tooltip {
+            position: relative;
+        }
+
+        .control-tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .control-tooltip:hover::after {
+            opacity: 1;
+        }
+
+        .draggable {
+            position: absolute;
+            cursor: move;
+            z-index: 20;
+            user-select: none;
+            touch-action: none; /* Para suportar touch em dispositivos móveis */
+        }
+
+        @media (max-width: 640px) {
+            .sidebar {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                z-index: 50;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .video-container {
+                padding: 0.5rem;
+                flex-direction: column;
+            }
+
+            .local-video {
+                width: 40%;
+                max-width: 250px;
+                z-index: 20;
+            }
+
+            .control-bar {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+                padding: 0.75rem;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(10px);
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .control-btn {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .sidebar {
+                width: 60px;
+                min-width: 60px;
+            }
+
+            .main-content {
+                margin-left: 60px;
+            }
+
+            .brand span {
+                display: none;
+            }
+
+            .user-panel, .log, .sidebar footer {
+                display: none;
+            }
+
+            .brand {
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .local-video {
+                width: 25%;
+                max-width: 300px;
+                z-index: 20;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark-darker text-gray-800 dark:text-gray-200">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-72 bg-dark-darker text-light flex flex-col border-r border-gray-700/50 h-full z-40 transition-all duration-300 ease-in-out">
+            <div class="brand flex items-center p-3 space-x-2 bg-gradient-to-r from-primary-dark to-primary">
+                <i class="fas fa-video text-white text-xl"></i>
+                <span class="text-xl font-bold text-white">Ultra Bagual</span>
+            </div>
+
+            <div class="user-panel p-2 glass-effect mx-2 mt-2 rounded-lg shadow">
+                <div class="flex items-center space-x-1">
+                    <input type="text" id="username" placeholder="Apelido" maxlength="20" class="flex-1 px-2 py-1.5 bg-gray-700/50 rounded-md text-light focus:outline-none focus:ring-2 focus:ring-secondary border border-gray-600/50 transition text-sm" />
+                    <button id="setUsername" class="action-btn bg-secondary hover:bg-green-500 text-white p-1.5 rounded-md transition flex items-center justify-center">
+                        <i class="fas fa-user-plus text-sm"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-0.5">Máx. 20 chars</p>
+            </div>
+
+            <div class="log flex-1 overflow-y-auto p-2 space-y-1 text-sm scrollbar-hide" id="logPanel">
+                <div class="text-center py-4 text-gray-500">
+                    <i class="fas fa-comment-dots text-lg mb-1"></i>
+                    <p class="text-xs">Atividades aparecerão aqui</p>
+                </div>
+            </div>
+
+            <div class="p-2 text-center text-xs text-gray-500 border-t border-gray-700/50">
+                Ultra Bagual Video © 2023
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-1 flex flex-col bg-gray-50 dark:bg-gray-900/50 transition-all duration-300 ease-in-out ml-72">
+            <button class="md:hidden p-2 bg-primary text-white rounded-r-lg fixed left-0 top-0 z-50" id="toggleSidebar">
+                <i class="fas fa-bars text-sm"></i>
+            </button>
+
+            <!-- Video Container -->
+            <div class="video-container flex-1 relative p-4">
+                <!-- Remote Videos (Main Focus) -->
+                <div class="remote-videos flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto scrollbar-hide p-2" id="remoteVideos">
+                    <!-- Placeholder será gerenciado pelo JavaScript -->
+                </div>
+
+                <!-- Local Video (Draggable) -->
+                <div class="local-video draggable absolute bottom-4 right-4 rounded-lg overflow-hidden bg-gray-800 shadow-lg border border-gray-300 dark:border-gray-700" id="localVideoContainer">
+                    <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                    <div class="video-overlay absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 opacity-0 hover:opacity-100 transition-opacity">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="label font-medium text-white text-sm" id="localLabel">Você</span>
+                                <span class="status text-xs text-gray-300 block" id="localStatus">Câmera local</span>
+                            </div>
+                            <div class="indicators flex space-x-1">
+                                <i class="fas fa-video text-white text-sm" id="localVideoIndicator"></i>
+                                <i class="fas fa-microphone text-white text-sm" id="localAudioIndicator"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Bar -->
+            <div class="control-bar glass-effect dark:bg-gray-800/80 p-3 flex justify-center gap-3 rounded-t-lg shadow-lg border-t border-gray-200 dark:border-gray-700/50 fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90">
+                <button id="startCall" class="control-tooltip control-btn bg-primary hover:bg-primary-dark text-white p-2 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md" data-tooltip="Iniciar" disabled>
+                    <i class="fas fa-play text-lg"></i>
+                </button>
+                <button id="toggleVideo" class="control-tooltip control-btn bg-white/90 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-white p-2 rounded-full transition-all shadow-md" data-tooltip="Vídeo">
+                    <i class="fas fa-video text-lg"></i>
+                </button>
+                <button id="toggleAudio" class="control-tooltip control-btn bg-white/90 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-white p-2 rounded-full transition-all shadow-md" data-tooltip="Áudio">
+                    <i class="fas fa-microphone text-lg"></i>
+                </button>
+                <button id="switchCamera" class="control-tooltip control-btn bg-white/90 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-white p-2 rounded-full transition-all shadow-md" data-tooltip="Câmera">
+                    <i class="fas fa-camera-rotate text-lg"></i>
+                </button>
+                <button id="fullscreen" class="control-tooltip control-btn bg-white/90 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-white p-2 rounded-full transition-all shadow-md" data-tooltip="Tela cheia">
+                    <i class="fas fa-expand text-lg"></i>
+                </button>
+                <button id="disconnect" class="control-tooltip control-btn bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-all shadow-md" data-tooltip="Sair">
+                    <i class="fas fa-phone-slash text-lg"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/script.js"></script>
+    <script>
+        document.getElementById('toggleSidebar')?.addEventListener('click', () => {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                mainContent.style.marginLeft = '0';
+            } else {
+                mainContent.style.marginLeft = '72px';
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            if (window.innerWidth > 640) {
+                sidebar.classList.remove('open');
+                mainContent.style.marginLeft = '72px';
+            } else if (!sidebar.classList.contains('open')) {
+                mainContent.style.marginLeft = '0';
+            }
+        });
+
+        // Gerenciar o placeholder de "Nenhuma chamada"
+        document.getElementById('startCall').addEventListener('click', () => {
+            const remoteVideos = document.getElementById('remoteVideos');
+            const placeholder = remoteVideos.querySelector('.remote-video-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const remoteVideos = document.getElementById('remoteVideos');
+            if (!remoteVideos.querySelector('video')) {
+                remoteVideos.innerHTML = `
+                    <div class="remote-video-placeholder flex flex-col items-center justify-center h-full rounded-lg bg-gray-200/50 dark:bg-gray-800/50 border-2 border-dashed border-gray-300 dark:border-gray-700 p-4 text-center">
+                        <i class="fas fa-users text-2xl text-gray-400 mb-2"></i>
+                        <h3 class="text-base font-medium text-gray-600 dark:text-gray-400 mb-1">Nenhuma chamada</h3>
+                        <p class="text-gray-500 dark:text-gray-500 text-sm">Inicie uma chamada</p>
+                    </div>`;
+            }
+        });
+
+        // Funcionalidade de arrastar o vídeo local (corrigida)
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+
+        const localVideoContainer = document.getElementById('localVideoContainer');
+        let containerWidth = localVideoContainer.offsetWidth;
+        let containerHeight = localVideoContainer.offsetHeight;
+
+        function updateContainerSize() {
+            containerWidth = localVideoContainer.offsetWidth;
+            containerHeight = localVideoContainer.offsetHeight;
+        }
+
+        localVideoContainer.addEventListener('mousedown', startDragging);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDragging);
+
+        // Suporte para touch (mobile)
+        localVideoContainer.addEventListener('touchstart', startDraggingTouch);
+        document.addEventListener('touchmove', dragTouch);
+        document.addEventListener('touchend', stopDraggingTouch);
+
+        function startDragging(e) {
+            initialX = e.clientX - currentX;
+            initialY = e.clientY - currentY;
+
+            if (e.target.closest('.draggable')) {
+                isDragging = true;
+                updateContainerSize();
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                const maxX = window.innerWidth - containerWidth;
+                const maxY = window.innerHeight - containerHeight - 60; // Ajuste para evitar a barra de controle
+
+                currentX = Math.max(0, Math.min(currentX, maxX));
+                currentY = Math.max(0, Math.min(currentY, maxY));
+
+                localVideoContainer.style.left = currentX + 'px';
+                localVideoContainer.style.top = currentY + 'px';
+                localVideoContainer.style.right = 'auto';
+                localVideoContainer.style.bottom = 'auto';
+            }
+        }
+
+        function stopDragging() {
+            isDragging = false;
+        }
+
+        function startDraggingTouch(e) {
+            const touch = e.touches[0];
+            initialX = touch.clientX - currentX;
+            initialY = touch.clientY - currentY;
+
+            if (e.target.closest('.draggable')) {
+                isDragging = true;
+                updateContainerSize();
+            }
+            e.preventDefault();
+        }
+
+        function dragTouch(e) {
+            if (isDragging) {
+                const touch = e.touches[0];
+                currentX = touch.clientX - initialX;
+                currentY = touch.clientY - initialY;
+
+                const maxX = window.innerWidth - containerWidth;
+                const maxY = window.innerHeight - containerHeight - 60;
+
+                currentX = Math.max(0, Math.min(currentX, maxX));
+                currentY = Math.max(0, Math.min(currentY, maxY));
+
+                localVideoContainer.style.left = currentX + 'px';
+                localVideoContainer.style.top = currentY + 'px';
+                localVideoContainer.style.right = 'auto';
+                localVideoContainer.style.bottom = 'auto';
+            }
+            e.preventDefault();
+        }
+
+        function stopDraggingTouch() {
+            isDragging = false;
+        }
+
+        // Posicionamento inicial (pode ser ajustado)
+        window.addEventListener('resize', () => {
+            if (!isDragging) {
+                localVideoContainer.style.left = 'auto';
+                localVideoContainer.style.right = '1rem';
+                localVideoContainer.style.bottom = '4rem';
+                localVideoContainer.style.top = 'auto';
+                currentX = window.innerWidth - localVideoContainer.offsetWidth - 16; // Ajuste para margem
+                currentY = window.innerHeight - localVideoContainer.offsetHeight - 64; // Ajuste para barra de controle
+            }
+        });
+
+        // Definir posição inicial ao carregar
+        window.dispatchEvent(new Event('resize'));
+    </script>
+</body>
+</html>
