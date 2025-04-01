@@ -1,0 +1,39 @@
+# Ignore the build directory
+build/
+# Ignore the node_modules directory
+node_modules/
+# Ignore the .env file
+.env
+# Ignore the .DS_Store file (macOS)
+.DS_Store
+# Ignore the .vscode directory (Visual Studio Code)
+.vscode/
+# Ignore the .idea directory (JetBrains IDEs)
+.idea/
+# Ignore the coverage directory (for testing)
+coverage/
+# Ignore the dist directory (for distribution)
+dist/
+# Ignore the logs directory
+logs/
+# Ignore the tmp directory
+tmp/
+# Ignore the .history directory (for Visual Studio Code)
+.history/
+# Ignore the .npmrc file (npm configuration)
+.npmrc
+# Ignore the .yarnrc file (Yarn configuration)
+.yarnrc
+# Ignore the .eslintcache file (ESLint cache)
+.eslintcache
+# Ignore the .prettierignore file (Prettier ignore file)
+.prettierignore
+# Ignore the .prettierrc file (Prettier configuration)
+.prettierrc
+# Ignore the .babelrc file (Babel configuration)
+.babelrc
+# Ignore the .gitkeep file (to keep empty directories in Git)
+.gitkeep
+# Ignore the .gitmodules file (Git submodules configuration)
+.gitmodules
+# Ignore the .gitattributes file (Git attributes configuration)
